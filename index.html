@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thiên Tuệ English</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="hero-gradient min-h-screen">
+
+  <!-- Language Toggle -->
+  <div class="fixed top-4 right-4 z-50">
+    <button id="langToggleBtn" onclick="toggleLang()"
+      class="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-4 py-2 rounded-full font-bold text-sm backdrop-blur-sm transition-all">
+      EN
+    </button>
+  </div>
+
+  <div class="min-h-screen flex flex-col lg:flex-row">
+    <!-- Left: Hero -->
+    <div class="flex-1 flex flex-col justify-center items-center px-8 py-16 text-white">
+      <div class="max-w-xl w-full">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+            <i class="fas fa-graduation-cap text-3xl text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-4xl font-black tracking-tight" data-i18n="heroTitle">Thiên Tuệ English </h1>
+          </div>
+        </div>
+        <p class="text-2xl font-semibold text-indigo-200 mb-4" data-i18n="heroSubtitle">Nơi tiếng Anh trở thành thế mạnh của bạn</p>
+        <p class="text-indigo-100 leading-relaxed mb-10" data-i18n="heroDesc">
+          Chúng tôi cung cấp các khóa học tiếng Anh chất lượng cao với giáo viên giàu kinh nghiệm, phương pháp học hiện đại và lộ trình học cá nhân hóa.
+        </p>
+
+        <!-- Features -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="feature-card">
+            <i class="fas fa-chalkboard-teacher text-3xl mb-3 text-amber-300"></i>
+            <h3 class="font-bold text-sm mb-1" data-i18n="feature1">Giáo viên chuyên nghiệp</h3>
+            <p class="text-xs text-indigo-200" data-i18n="feature1Desc">Đội ngũ giáo viên có chứng chỉ quốc tế IELTS 8.0+</p>
+          </div>
+          <div class="feature-card">
+            <i class="fas fa-book-open text-3xl mb-3 text-emerald-300"></i>
+            <h3 class="font-bold text-sm mb-1" data-i18n="feature2">Học liệu phong phú</h3>
+            <p class="text-xs text-indigo-200" data-i18n="feature2Desc">Hàng trăm bài học, video và tài liệu học tập</p>
+          </div>
+          <div class="feature-card">
+            <i class="fas fa-chart-line text-3xl mb-3 text-rose-300"></i>
+            <h3 class="font-bold text-sm mb-1" data-i18n="feature3">Theo dõi tiến trình</h3>
+            <p class="text-xs text-indigo-200" data-i18n="feature3Desc">Hệ thống theo dõi tiến trình học tập chi tiết</p>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="flex gap-8 mt-10">
+          <div class="text-center">
+            <div class="text-3xl font-black text-amber-300">500+</div>
+            <div class="text-xs text-indigo-200 mt-1">Học viên</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-black text-emerald-300">20+</div>
+            <div class="text-xs text-indigo-200 mt-1">Giáo viên</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-black text-rose-300">95%</div>
+            <div class="text-xs text-indigo-200 mt-1">Hài lòng</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-black text-cyan-300">10+</div>
+            <div class="text-xs text-indigo-200 mt-1">Năm kinh nghiệm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Login -->
+    <div class="w-full lg:w-[420px] flex items-center justify-center p-8">
+      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-lock text-2xl text-indigo-600"></i>
+          </div>
+          <h2 class="text-2xl font-black text-gray-900" data-i18n="loginTitle">Đăng nhập</h2>
+          <p class="text-gray-500 text-sm mt-1" data-i18n="loginDesc">Chọn vai trò và đăng nhập để truy cập hệ thống</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <!-- Role -->
+          <div class="mb-5">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <i class="fas fa-user-tag mr-1 text-indigo-500"></i>
+              <span data-i18n="role">Vai trò</span>
+            </label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="role-btn flex flex-col items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:border-indigo-400 has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50">
+                <input type="radio" name="role" value="student" class="hidden" />
+                <i class="fas fa-user-graduate text-xl text-indigo-500 mb-1"></i>
+                <span class="text-xs font-semibold text-gray-700" data-i18n="student">Học sinh</span>
+              </label>
+              <label class="role-btn flex flex-col items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:border-indigo-400 has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50">
+                <input type="radio" name="role" value="teacher" class="hidden" />
+                <i class="fas fa-chalkboard-teacher text-xl text-emerald-500 mb-1"></i>
+                <span class="text-xs font-semibold text-gray-700" data-i18n="teacher">Giáo viên</span>
+              </label>
+              <label class="role-btn flex flex-col items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer transition-all hover:border-indigo-400 has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50">
+                <input type="radio" name="role" value="admin" class="hidden" />
+                <i class="fas fa-user-shield text-xl text-amber-500 mb-1"></i>
+                <span class="text-xs font-semibold text-gray-700" data-i18n="admin">Quản trị viên</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Username -->
+          <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <i class="fas fa-user mr-1 text-indigo-500"></i>
+              <span data-i18n="username">Tên đăng nhập</span>
+            </label>
+            <div class="relative">
+              <input type="text" id="username" class="form-input pl-10" data-i18n-placeholder="username" placeholder="Tên đăng nhập" required />
+              <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              <i class="fas fa-lock mr-1 text-indigo-500"></i>
+              <span data-i18n="password">Mật khẩu</span>
+            </label>
+            <div class="relative">
+              <input type="password" id="password" class="form-input pl-10 pr-10" placeholder="Mật khẩu" required />
+              <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-eye" id="eyeIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div id="loginError" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
+            <i class="fas fa-exclamation-circle"></i>
+            <span data-i18n="loginError">Sai tên đăng nhập, mật khẩu hoặc vai trò!</span>
+          </div>
+
+          <button type="submit" class="btn-primary w-full py-3 text-base rounded-xl flex items-center justify-center gap-2">
+            <i class="fas fa-sign-in-alt"></i>
+            <span data-i18n="loginBtn">Đăng nhập</span>
+          </button>
+        </form>
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="text-center py-4 text-indigo-200 text-xs">
+    <span data-i18n="copyright">© 2026 Thiên Tuệ English. Bản quyền thuộc về Thiên Tuệ English.</span>
+    <span data-i18n="copyright">Bản Quyền Thuộc Về Trần Cường</span>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    // Redirect nếu đã đăng nhập
+    const existingUser = getCurrentUser();
+    if (existingUser) {
+      if (existingUser.role === 'admin') window.location.href = 'admin.html';
+      else if (existingUser.role === 'teacher') window.location.href = 'teacher.html';
+      else window.location.href = 'student.html';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const roleInput = document.querySelector('input[name="role"]:checked');
+      if (!roleInput) { document.getElementById('loginError').classList.remove('hidden'); return; }
+      const role = roleInput.value;
+
+      const btn = document.querySelector('button[type="submit"]');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Đang đăng nhập...</span>';
+      btn.disabled = true;
+
+      const success = await sbLogin(username, password, role);
+      if (success) {
+        document.getElementById('loginError').classList.add('hidden');
+        setTimeout(() => {
+          if (role === 'admin') window.location.href = 'admin.html';
+          else if (role === 'teacher') window.location.href = 'teacher.html';
+          else window.location.href = 'student.html';
+        }, 400);
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+        document.getElementById('loginError').classList.add('animate-bounce');
+        setTimeout(() => document.getElementById('loginError').classList.remove('animate-bounce'), 500);
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span data-i18n="loginBtn">Đăng nhập</span>';
+        btn.disabled = false;
+      }
+    }
+
+    function togglePassword() {
+      const pwd = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+      if (pwd.type === 'password') { pwd.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+      else { pwd.type = 'password'; icon.className = 'fas fa-eye'; }
+    }
+
+    document.querySelectorAll('input[name="role"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        document.querySelectorAll('.role-btn').forEach(btn => {
+          btn.classList.remove('border-indigo-600', 'bg-indigo-50');
+          btn.classList.add('border-gray-200');
+        });
+        this.closest('.role-btn').classList.add('border-indigo-600', 'bg-indigo-50');
+        this.closest('.role-btn').classList.remove('border-gray-200');
+      });
+    });
+  </script>
+</body>
+</html>

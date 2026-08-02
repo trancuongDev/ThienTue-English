@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thiên Tuệ English - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-gray-50">
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-logo">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+        <i class="fas fa-user-shield text-white"></i>
+      </div>
+      <div>
+        <div class="text-white font-black text-base">Thiên Tuệ</div>
+        <div class="text-indigo-300 text-xs">Admin Portal</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav mt-4" id="sidebarNav"></nav>
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+    <button onclick="logout()" class="flex items-center gap-2 text-indigo-300 hover:text-white transition-colors text-sm w-full">
+      <i class="fas fa-sign-out-alt"></i>
+      <span data-i18n="logout">Đăng xuất</span>
+    </button>
+  </div>
+</aside>
+<div class="main-content">
+  <header class="topbar">
+    <div class="flex items-center gap-3">
+      <button class="mobile-menu-btn text-gray-600 hover:text-indigo-600 text-xl" onclick="openMobileSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <h2 class="font-bold text-gray-900 text-lg hidden sm:block">Admin Dashboard</h2>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="langToggleBtn" onclick="toggleLang()" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg font-bold text-sm hover:bg-indigo-100 transition-colors">EN</button>
+      <div class="flex items-center gap-2">
+        <div id="topbarAvatar" class="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-sm"></div>
+        <span class="text-gray-700 font-semibold text-sm hidden sm:block" id="topbarUserName"></span>
+      </div>
+    </div>
+  </header>
+  <main class="p-4 lg:p-6">
+
+    <!-- DASHBOARD -->
+    <section id="section-dashboard" class="content-section">
+      <h2 class="text-xl font-black text-gray-900 mb-6">Tổng quan hệ thống</h2>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center"><i class="fas fa-user-graduate text-indigo-600"></i></div>
+            <span class="text-sm text-gray-500" data-i18n="manageStudents">Học sinh</span>
+          </div>
+          <div class="text-3xl font-black text-gray-900" id="dashStudentCount">0</div>
+          <div class="text-xs text-emerald-600 mt-1 font-semibold" id="dashNewStudents"></div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><i class="fas fa-chalkboard-teacher text-emerald-600"></i></div>
+            <span class="text-sm text-gray-500" data-i18n="manageTeachers">Giáo viên</span>
+          </div>
+          <div class="text-3xl font-black text-gray-900" id="dashTeacherCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><i class="fas fa-school text-amber-600"></i></div>
+            <span class="text-sm text-gray-500" data-i18n="totalClasses">Lớp học</span>
+          </div>
+          <div class="text-3xl font-black text-gray-900" id="dashClassCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center"><i class="fas fa-money-bill-wave text-rose-600"></i></div>
+            <span class="text-sm text-gray-500" data-i18n="totalRevenue">Doanh thu</span>
+          </div>
+          <div class="text-xl font-black text-gray-900" id="dashRevenue">0</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl p-5 shadow-sm">
+          <h3 class="font-bold text-gray-900 mb-4">Hoạt động gần đây</h3>
+          <div id="dashRecentActivities" class="space-y-3"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm">
+          <h3 class="font-bold text-gray-900 mb-4">Tổng quan lớp học</h3>
+          <div id="dashClassSummary" class="space-y-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MANAGE STUDENTS -->
+    <section id="section-manageStudents" class="content-section">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h2 class="text-xl font-black text-gray-900" data-i18n="manageStudents">Quản lý học sinh</h2>
+        <div class="flex gap-2">
+          <input type="text" placeholder="Tìm kiếm..." class="form-input w-48" oninput="renderManageStudents(this.value)" />
+          <button onclick="openAddStudentModal()" class="btn-primary flex items-center gap-2 whitespace-nowrap">
+            <i class="fas fa-plus"></i> <span data-i18n="addStudent">Thêm HS</span>
+          </button>
+          <button onclick="openAddToClassModal()" class="btn-secondary flex items-center gap-2 whitespace-nowrap">
+            <i class="fas fa-layer-group"></i> <span>Gán lớp</span>
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead><tr>
+              <th data-i18n="name">Tên</th><th data-i18n="email">Email</th><th data-i18n="phone">SĐT</th>
+              <th data-i18n="class">Lớp</th><th data-i18n="progress">Tiến trình</th>
+              <th data-i18n="status">Trạng thái</th><th data-i18n="actions">Thao tác</th>
+            </tr></thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MANAGE TEACHERS -->
+    <section id="section-manageTeachers" class="content-section">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h2 class="text-xl font-black text-gray-900" data-i18n="manageTeachers">Quản lý giáo viên</h2>
+        <div class="flex gap-2">
+          <input type="text" placeholder="Tìm kiếm..." class="form-input w-48" oninput="renderManageTeachers(this.value)" />
+          <button onclick="openAddTeacherModal()" class="btn-primary flex items-center gap-2 whitespace-nowrap">
+            <i class="fas fa-plus"></i> <span data-i18n="addTeacher">Thêm GV</span>
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead><tr>
+              <th data-i18n="name">Tên</th><th data-i18n="email">Email</th><th data-i18n="phone">SĐT</th>
+              <th>Môn dạy</th><th>Kinh nghiệm</th><th data-i18n="status">Trạng thái</th><th data-i18n="actions">Thao tác</th>
+            </tr></thead>
+            <tbody id="teacherTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MANAGE CLASSES -->
+    <section id="section-manageClasses" class="content-section">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-black text-gray-900" data-i18n="manageClasses">Quản lý lớp học</h2>
+        <button onclick="openAddClassModal()" class="btn-primary flex items-center gap-2">
+          <i class="fas fa-plus"></i> <span data-i18n="addClass">Thêm lớp</span>
+        </button>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead><tr>
+              <th data-i18n="className">Tên lớp</th><th data-i18n="level">Cấp độ</th><th data-i18n="teacher">Giáo viên</th>
+              <th>Học sinh</th><th>Lịch học</th><th data-i18n="status">Trạng thái</th><th data-i18n="actions">Thao tác</th>
+            </tr></thead>
+            <tbody id="classTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRACK PROGRESS -->
+    <section id="section-trackProgress" class="content-section">
+      <h2 class="text-xl font-black text-gray-900 mb-6" data-i18n="trackProgress">Theo dõi tiến trình</h2>
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead><tr>
+              <th data-i18n="name">Tên</th><th data-i18n="class">Lớp</th><th data-i18n="progress">Tiến trình</th>
+              <th>Đánh giá</th><th>Bài học hoàn thành</th><th data-i18n="joinDate">Ngày tham gia</th>
+            </tr></thead>
+            <tbody id="progressTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TUITION -->
+    <section id="section-tuition" class="content-section">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h2 class="text-xl font-black text-gray-900" data-i18n="tuition">Học phí</h2>
+        <div class="flex gap-2">
+          <select id="tuitionFilter" onchange="renderTuition()" class="form-input w-auto">
+            <option value="all">Tất cả</option>
+            <option value="paid" data-i18n="paid">Đã đóng</option>
+            <option value="unpaid" data-i18n="unpaid">Chưa đóng</option>
+          </select>
+          <button onclick="openTuitionCreateModal()" class="btn-primary flex items-center gap-2 whitespace-nowrap">
+            <i class="fas fa-plus"></i> Tạo phiếu HP
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><i class="fas fa-check-circle text-emerald-600"></i></div>
+            <span class="text-sm text-gray-500" data-i18n="paid">Đã đóng</span>
+          </div>
+          <div class="text-2xl font-black text-emerald-600" id="tuitionTotalPaid">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center"><i class="fas fa-clock text-red-500"></i></div>
+            <span class="text-sm text-gray-500" data-i18n="unpaid">Chưa đóng</span>
+          </div>
+          <div class="text-2xl font-black text-red-500" id="tuitionTotalUnpaid">0</div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead><tr>
+              <th data-i18n="name">Học sinh</th><th data-i18n="class">Lớp</th><th>Tháng</th>
+              <th data-i18n="amount">Số tiền</th><th data-i18n="dueDate">Hạn nộp</th>
+              <th data-i18n="status">Trạng thái</th><th>Ngày đóng</th><th data-i18n="actions">Thao tác</th>
+            </tr></thead>
+            <tbody id="tuitionTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="section-settings" class="content-section">
+      <h2 class="text-xl font-black text-gray-900 mb-6" data-i18n="settings">Cài đặt hệ thống</h2>
+      <div class="max-w-2xl space-y-4">
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 class="font-bold text-gray-900 mb-5 flex items-center gap-2">
+            <i class="fas fa-building text-indigo-500"></i>
+            <span data-i18n="centerInfo">Thông tin trung tâm</span>
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="centerName">Tên trung tâm</label>
+              <input id="settingCenterName" type="text" class="form-input" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="centerPhone">Điện thoại</label>
+              <input id="settingPhone" type="text" class="form-input" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="centerAddress">Địa chỉ</label>
+              <input id="settingAddress" type="text" class="form-input" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="centerEmail">Email</label>
+              <input id="settingEmail" type="email" class="form-input" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Website</label>
+              <input id="settingWebsite" type="text" class="form-input" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="description">Mô tả</label>
+              <textarea id="settingDesc" class="form-input" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 class="font-bold text-gray-900 mb-5 flex items-center gap-2">
+            <i class="fas fa-cogs text-indigo-500"></i>
+            <span data-i18n="systemSettings">Cài đặt hệ thống</span>
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Sĩ số tối đa/lớp</label>
+              <input id="settingMaxClass" type="number" class="form-input" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Thời lượng buổi học (phút)</label>
+              <input id="settingSessionDuration" type="number" class="form-input" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Giờ làm việc</label>
+              <input id="settingWorkingHours" type="text" class="form-input" />
+            </div>
+          </div>
+        </div>
+        <button onclick="saveSettings()" class="btn-primary px-8 py-3 flex items-center gap-2">
+          <i class="fas fa-save"></i> <span data-i18n="saveSettings">Lưu cài đặt</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Student Modal -->
+<div id="studentModal" class="modal-overlay" onclick="if(event.target===this)closeStudentModal()">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-lg text-gray-900" id="studentModalTitle">Thêm học sinh</h3>
+      <button onclick="closeStudentModal()" class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times text-gray-600"></i></button>
+    </div>
+    <form id="studentForm" onsubmit="event.preventDefault();saveStudent()" class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="fullName">Họ và tên</label>
+          <input id="studentNameInput" type="text" class="form-input" placeholder="Nguyễn Văn A" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="email">Email</label>
+          <input id="studentEmailInput" type="email" class="form-input" placeholder="email@gmail.com" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="phone">Điện thoại</label>
+          <input id="studentPhoneInput" type="tel" class="form-input" placeholder="09xxxxxxxx" />
+        </div>
+
+        <!-- Tài khoản đăng nhập — chỉ hiện khi TẠO MỚI -->
+        <div id="studentAccountFields" class="col-span-2 p-3 bg-indigo-50 rounded-xl space-y-3 border border-indigo-100">
+          <p class="text-xs font-bold text-indigo-600 uppercase tracking-wide flex items-center gap-1">
+            <i class="fas fa-key"></i> Tài khoản đăng nhập (tự động)
+          </p>
+          <div class="p-3 bg-white rounded-lg border border-indigo-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-gray-500">Tên đăng nhập</p>
+                <p class="text-sm font-semibold text-gray-800" id="studentUsernamePreview">← nhập email ở trên</p>
+              </div>
+              <i class="fas fa-user text-indigo-400"></i>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-gray-500">Mật khẩu (Mã HS)</p>
+                <p class="text-lg font-black text-indigo-600 tracking-widest" id="studentPasswordPreview">—</p>
+              </div>
+              <button type="button" onclick="regenStudentPassword()" class="text-xs text-indigo-500 hover:text-indigo-700 underline">
+                <i class="fas fa-sync-alt mr-1"></i>Tạo lại
+              </button>
+            </div>
+            <div class="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
+              <i class="fas fa-info-circle text-amber-500 text-xs flex-shrink-0"></i>
+              <p class="text-xs text-amber-700">Ghi lại mã HS này và gửi cho học sinh. Học sinh dùng email + mã này để đăng nhập.</p>
+            </div>
+          </div>
+          <input type="hidden" id="studentPasswordInput" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="class">Lớp</label>
+          <select id="studentClassInput" class="form-input">
+            <option value="">-- Chọn lớp --</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="birthday">Ngày sinh</label>
+          <input id="studentBirthdayInput" type="date" class="form-input" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="address">Địa chỉ</label>
+          <input id="studentAddressInput" type="text" class="form-input" placeholder="Địa chỉ..." />
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 py-2.5" data-i18n="save">Lưu</button>
+        <button type="button" onclick="closeStudentModal()" class="btn-outline flex-1 py-2.5" data-i18n="cancel">Hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Teacher Modal -->
+<div id="teacherModal" class="modal-overlay" onclick="if(event.target===this)closeTeacherModal()">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-lg text-gray-900" id="teacherModalTitle">Thêm giáo viên</h3>
+      <button onclick="closeTeacherModal()" class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times text-gray-600"></i></button>
+    </div>
+    <form id="teacherForm" onsubmit="event.preventDefault();saveTeacher()" class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="fullName">Họ và tên</label>
+          <input id="teacherNameInput" type="text" class="form-input" placeholder="Nguyễn Thị B" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="email">Email</label>
+          <input id="teacherEmailInput" type="email" class="form-input" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="phone">Điện thoại</label>
+          <input id="teacherPhoneInput" type="tel" class="form-input" />
+        </div>
+
+        <!-- Tài khoản đăng nhập — chỉ hiện khi TẠO MỚI -->
+        <div id="teacherAccountFields" class="col-span-2 p-3 bg-emerald-50 rounded-xl space-y-3 border border-emerald-100">
+          <p class="text-xs font-bold text-emerald-600 uppercase tracking-wide flex items-center gap-1">
+            <i class="fas fa-key"></i> Tài khoản đăng nhập
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Tên đăng nhập <span class="text-red-500">*</span></label>
+              <input id="teacherUsernameInput" type="text" class="form-input" placeholder="vd: nguyenthib" autocomplete="off" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Mật khẩu <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <input id="teacherPasswordInput" type="password" class="form-input pr-10" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" />
+                <button type="button" onclick="togglePwd('teacherPasswordInput',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-eye text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Môn dạy</label>
+          <input id="teacherSubjectInput" type="text" class="form-input" placeholder="Grammar & Writing" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Kinh nghiệm</label>
+          <input id="teacherExpInput" type="text" class="form-input" placeholder="3 years" />
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 py-2.5" data-i18n="save">Lưu</button>
+        <button type="button" onclick="closeTeacherModal()" class="btn-outline flex-1 py-2.5" data-i18n="cancel">Hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Class Modal -->
+<div id="classModal" class="modal-overlay" onclick="if(event.target===this)closeClassModal()">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-lg text-gray-900" id="classModalTitle">Thêm lớp học</h3>
+      <button onclick="closeClassModal()" class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times text-gray-600"></i></button>
+    </div>
+    <form id="classForm" onsubmit="event.preventDefault();saveClass()" class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="className">Tên lớp</label>
+          <input id="classNameInput" type="text" class="form-input" placeholder="VD: A1" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="level">Cấp độ</label>
+          <select id="classLevelInput" class="form-input">
+            <option>Cơ bản</option><option>Trung cấp</option><option>Nâng cao</option><option>IELTS Prep</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="assignTeacher">Giáo viên phụ trách</label>
+          <select id="classTeacherInput" class="form-input"></select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="maxStudents">Sĩ số tối đa</label>
+          <input id="classMaxInput" type="number" class="form-input" value="15" min="5" max="30" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" data-i18n="classRoom">Phòng học</label>
+          <input id="classRoomInput" type="text" class="form-input" placeholder="Phòng 101" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Lịch học</label>
+          <input id="classScheduleInput" type="text" class="form-input" placeholder="Thứ 2, 4, 6 - 18:00" />
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 py-2.5" data-i18n="save">Lưu</button>
+        <button type="button" onclick="closeClassModal()" class="btn-outline flex-1 py-2.5" data-i18n="cancel">Hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Account Created Modal -->
+<div id="accountCreatedModal" class="modal-overlay">
+  <div class="modal-box max-w-sm text-center">
+    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-check-circle text-3xl text-emerald-500"></i>
+    </div>
+    <h3 class="font-bold text-lg text-gray-900 mb-1">Tạo tài khoản thành công!</h3>
+    <p class="text-sm text-gray-500 mb-4" id="acName"></p>
+    <div class="bg-gray-50 rounded-xl p-4 text-left space-y-3 mb-3">
+      <div>
+        <p class="text-xs text-gray-500 mb-0.5">Tên đăng nhập (Email)</p>
+        <div class="flex items-center gap-2">
+          <p class="font-semibold text-gray-900 flex-1 text-sm break-all" id="acUsername"></p>
+          <button onclick="copyText('acUsername')" class="text-indigo-500 hover:text-indigo-700 flex-shrink-0 w-7 h-7 bg-white rounded-lg border flex items-center justify-center" title="Sao chép">
+            <i class="fas fa-copy text-xs"></i>
+          </button>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 mb-0.5" id="acPasswordLabel">Mật khẩu (Mã HS)</p>
+        <div class="flex items-center gap-2">
+          <p class="font-black text-indigo-600 text-2xl tracking-widest flex-1" id="acPassword"></p>
+          <button onclick="copyText('acPassword')" class="text-indigo-500 hover:text-indigo-700 flex-shrink-0 w-7 h-7 bg-white rounded-lg border flex items-center justify-center" title="Sao chép">
+            <i class="fas fa-copy text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Sao chép toàn bộ & chia sẻ -->
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      <button onclick="copyFullAccountInfo()" class="btn-outline py-2 text-sm flex items-center justify-center gap-2">
+        <i class="fas fa-clipboard"></i> Sao chép tất cả
+      </button>
+      <button onclick="shareAccountInfo()" class="btn-secondary py-2 text-sm flex items-center justify-center gap-2">
+        <i class="fas fa-share-alt"></i> Chia sẻ
+      </button>
+    </div>
+    <div class="flex items-center gap-2 p-3 bg-amber-50 rounded-lg mb-4 text-left">
+      <i class="fas fa-exclamation-triangle text-amber-500 flex-shrink-0 text-xs"></i>
+      <p class="text-xs text-amber-700">Lưu lại thông tin này. Sau khi đóng sẽ không xem lại được mật khẩu.</p>
+    </div>
+    <button onclick="closeAccountCreatedModal()" class="btn-primary w-full py-2.5">Đã lưu, đóng lại</button>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="resetPwdModal" class="modal-overlay" onclick="if(event.target===this)closeResetPwdModal()">
+  <div class="modal-box max-w-sm">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-lg text-gray-900">Đổi mật khẩu</h3>
+      <button onclick="closeResetPwdModal()" class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times text-gray-600"></i></button>
+    </div>
+    <div class="mb-4 p-3 bg-indigo-50 rounded-xl">
+      <p class="text-sm font-semibold text-indigo-700" id="resetPwdName"></p>
+      <p class="text-xs text-indigo-500" id="resetPwdEmail"></p>
+    </div>
+    <div class="space-y-3 mb-5">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Mật khẩu mới</label>
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <input id="newPwdInput" type="password" class="form-input pr-10" placeholder="Nhập mật khẩu mới..." />
+            <button type="button" onclick="togglePwd('newPwdInput',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <i class="fas fa-eye text-sm"></i>
+            </button>
+          </div>
+          <button onclick="genNewPwd()" class="btn-outline px-3 py-2 text-xs whitespace-nowrap">
+            <i class="fas fa-sync-alt mr-1"></i>Tự tạo
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="saveResetPwd()" class="btn-primary flex-1 py-2.5">Lưu mật khẩu</button>
+      <button onclick="closeResetPwdModal()" class="btn-outline flex-1 py-2.5">Hủy</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Student to Class Modal -->
+<div id="addToClassModal" class="modal-overlay" onclick="if(event.target===this)closeAddToClassModal()">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-lg text-gray-900">Thêm học sinh vào lớp</h3>
+      <button onclick="closeAddToClassModal()" class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times text-gray-600"></i></button>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-semibold text-gray-700 mb-1">Chọn lớp</label>
+      <select id="addToClassSelect" class="form-input" onchange="renderAddToClassStudents()"></select>
+    </div>
+    <div id="addToClassStudentList" class="space-y-2 max-h-64 overflow-y-auto mb-4"></div>
+    <div class="flex gap-3">
+      <button onclick="saveAddToClass()" class="btn-primary flex-1 py-2.5">Lưu</button>
+      <button onclick="closeAddToClassModal()" class="btn-outline flex-1 py-2.5">Hủy</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tuition Create Modal -->
+<div id="tuitionCreateModal" class="modal-overlay" onclick="if(event.target===this)closeTuitionCreateModal()">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold text-lg text-gray-900">Tạo phiếu học phí</h3>
+      <button onclick="closeTuitionCreateModal()" class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times text-gray-600"></i></button>
+    </div>
+    <form onsubmit="event.preventDefault();saveTuitionRecord()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Học sinh</label>
+        <select id="tuitionStudentSelect" class="form-input"></select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Tháng</label>
+          <input id="tuitionMonth" type="text" class="form-input" placeholder="vd: 01/2026" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Số tiền (VNĐ)</label>
+          <input id="tuitionAmount" type="number" class="form-input" placeholder="2500000" min="0" required />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Hạn nộp</label>
+        <input id="tuitionDueDate" type="date" class="form-input" required />
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 py-2.5">Tạo phiếu</button>
+        <button type="button" onclick="closeTuitionCreateModal()" class="btn-outline flex-1 py-2.5">Hủy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div id="confirmModal" class="modal-overlay" onclick="if(event.target===this)closeConfirmModal()">
+  <div class="modal-box max-w-sm text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-exclamation-triangle text-2xl text-red-500"></i>
+    </div>
+    <h3 class="font-bold text-lg text-gray-900 mb-2" data-i18n="confirmDelete">Xác nhận xóa</h3>
+    <p class="text-gray-500 mb-6" id="confirmMsg"></p>
+    <div class="flex gap-3">
+      <button onclick="closeConfirmModal()" class="btn-outline flex-1 py-2.5" data-i18n="cancel">Hủy</button>
+      <button id="confirmOkBtn" class="btn-danger flex-1 py-2.5" data-i18n="deleteConfirm">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/admin.js"></script>
+<script>
+function openMobileSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('active');
+}
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+// Cập nhật preview tên đăng nhập khi gõ email học sinh
+document.addEventListener('DOMContentLoaded', () => {
+  const emailInput = document.getElementById('studentEmailInput');
+  if (emailInput) {
+    emailInput.addEventListener('input', function() {
+      const preview = document.getElementById('studentUsernamePreview');
+      if (preview) preview.textContent = this.value.trim() || '← nhập email ở trên';
+    });
+  }
+});
+</script>
+</body>
+</html>
