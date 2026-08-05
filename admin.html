@@ -16,7 +16,6 @@
   <meta name="apple-mobile-web-app-title" content="Thiên Tuệ English"/>
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <!-- EmailJS đã bị vô hiệu hóa -->
   <!-- <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -61,6 +60,7 @@
       <a href="#" class="slink" data-page="files" data-label="Lưu trữ"><span class="slink-icon">🗂️</span><span class="slink-label">Lưu trữ tài liệu</span></a>
       <a href="#" class="slink" data-page="schedule" data-label="Lịch học"><span class="slink-icon">📅</span><span class="slink-label">Lịch học</span></a>
       <a href="#" class="slink" data-page="profile" data-label="Hồ sơ"><span class="slink-icon"></span><span class="slink-label">Hồ sơ</span></a>
+      <a href="#" class="slink" data-page="guide" data-label="Hướng dẫn"><span class="slink-icon">📖</span><span class="slink-label">Hướng dẫn sử dụng</span></a>
     </nav>
     <a href="login.html" class="slink slink-logout" id="logoutBtn" data-label="Đăng xuất"><span class="slink-icon">🚪</span><span class="slink-label">Đăng xuất</span></a>
     <a href="index.html" style="display:flex;align-items:center;gap:.6rem;margin:.3rem .75rem .5rem;padding:.45rem .85rem;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);font-size:.78rem;font-weight:600;transition:all .18s;text-decoration:none" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.5)'">
@@ -361,11 +361,6 @@
           </div>
 
           <!-- Nút chính -->
-          <button class="btn-outline" id="bulkCreateBtn"
-            onclick="openBulkCreateModal()"
-            style="background:#f0fdf4;border-color:#86efac;color:#166534;font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:.35rem">
-            📋 Tạo hàng loạt
-          </button>
           <button class="btn-primary" id="openAddStudentBtn"
             style="display:flex;align-items:center;gap:.35rem;font-size:.88rem">
             ➕ Thêm học sinh
@@ -662,18 +657,6 @@
           <div class="profile-role">Admin</div>
         </div>
       </div>
-      <div class="form-panel" style="max-width:480px;margin-top:1.5rem">
-        <h3>Đổi mật khẩu</h3>
-        <label>Mật khẩu hiện tại</label>
-        <input type="password" id="pwOld" placeholder="Mật khẩu hiện tại"/>
-        <label>Mật khẩu mới</label>
-        <input type="password" id="pwNew" placeholder="Mật khẩu mới"/>
-        <label>Xác nhận mật khẩu mới</label>
-        <input type="password" id="pwConfirm" placeholder="Nhập lại mật khẩu mới"/>
-        <div id="pwError" class="error-msg"></div>
-        <div id="pwSuccess" class="success-msg"></div>
-        <button class="btn-primary" id="pwSaveBtn" style="margin-top:0.5rem">Lưu thay đổi</button>
-      </div>
     </section>
 
     <!-- PAGE: LỊCH HỌC V2 -->
@@ -814,6 +797,34 @@
       </div>
     </section>
 
+    <!-- ══════════ PAGE: HƯỚNG DẪN SỬ DỤNG ══════════ -->
+    <section class="page" id="pageGuide">
+      <div class="page-header">
+        <h1 class="page-title">📖 Hướng dẫn sử dụng</h1>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-bottom:1.25rem;position:relative">
+        <input id="guideSearch" placeholder="🔍 Tìm kiếm hướng dẫn..." oninput="filterGuide(this.value)"
+          style="width:100%;padding:.65rem 1rem .65rem 2.5rem;border:1.5px solid var(--border);border-radius:12px;font-size:.9rem;outline:none;background:var(--card);color:var(--text)"/>
+        <span style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none">🔍</span>
+      </div>
+
+      <!-- Tab danh mục -->
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.25rem" id="guideTabs">
+        <button class="btn-primary btn-sm" onclick="setGuideTab('all',this)">📋 Tất cả</button>
+        <button class="btn-outline btn-sm" onclick="setGuideTab('student',this)">🎓 Học sinh</button>
+        <button class="btn-outline btn-sm" onclick="setGuideTab('lesson',this)">📚 Bài học</button>
+        <button class="btn-outline btn-sm" onclick="setGuideTab('class',this)">🏫 Lớp học</button>
+        <button class="btn-outline btn-sm" onclick="setGuideTab('file',this)">🗂️ File</button>
+        <button class="btn-outline btn-sm" onclick="setGuideTab('system',this)">⚙️ Hệ thống</button>
+        <button class="btn-outline btn-sm" onclick="setGuideTab('assistant',this)">🤝 Trợ lý</button>
+        <button class="btn-outline btn-sm" onclick="setGuideTab('teacher',this)">👨‍🏫 Giáo viên</button>
+      </div>
+
+      <div id="guideContent"></div>
+    </section>
+
   <!-- MODAL: Đồng bộ Gmail → Lớp phụ -->
   <div class="modal-overlay" id="gmailSyncModal">
     <div class="modal" style="max-width:680px">
@@ -898,98 +909,6 @@
         <div class="form-actions" style="margin-top:1rem">
           <button class="btn-outline" onclick="document.getElementById('gmailSyncStep2').style.display='none';document.getElementById('gmailSyncStep1').style.display='block'">← Quay lại</button>
           <button class="btn-primary" id="gmailDoSyncBtn" onclick="doGmailSync()">✅ Đồng bộ tất cả</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: Tạo tài khoản hàng loạt -->
-  <div class="modal-overlay" id="bulkCreateModal">
-    <div class="modal" style="max-width:780px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-        <h3 style="font-weight:800;margin:0">📋 Tạo tài khoản hàng loạt</h3>
-        <button onclick="document.getElementById('bulkCreateModal').classList.remove('open')" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
-      </div>
-
-      <!-- Bước 1: Upload / Paste -->
-      <div id="bulkStep1">
-        <div style="background:#f0fdf4;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;font-size:.85rem;line-height:1.7;color:#166534">
-          <b>📋 Hướng dẫn:</b><br/>
-          Upload file Excel/CSV hoặc dán danh sách học sinh.<br/>
-          Các cột cần có: <b>Họ tên</b>, <b>Gmail</b> — tùy chọn: <b>SĐT</b>, <b>Lớp</b>, <b>Ghi chú</b><br/>
-          Hệ thống tự tạo mã học viên và mật khẩu, sau đó gửi email cho từng người.
-        </div>
-
-        <label>Lớp mặc định <span style="color:var(--muted);font-weight:400">(nếu file không có cột Lớp)</span></label>
-        <select id="bulkDefaultClass" style="width:100%;padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:10px;outline:none;font-size:.9rem;margin-bottom:.75rem">
-          <option value="">-- Không gán lớp --</option>
-        </select>
-
-        <label>Upload file Excel/CSV</label>
-        <div id="bulkDropZone"
-          ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
-          ondragleave="this.style.borderColor='var(--border)'"
-          ondrop="handleBulkDrop(event)"
-          onclick="document.getElementById('bulkFileInput').click()"
-          style="border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:.75rem">
-          <div style="font-size:2rem;margin-bottom:.35rem">📎</div>
-          <div style="font-weight:700;color:var(--text)">Kéo thả hoặc bấm để chọn file</div>
-          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem">Excel (.xlsx) hoặc CSV — cột: <b>Họ tên, Gmail</b> (bắt buộc), SĐT, Lớp, Ghi chú (tuỳ chọn)</div>
-          <input type="file" id="bulkFileInput" accept=".xlsx,.csv,.xls" hidden onchange="parseBulkFile(this.files[0])"/>
-        </div>
-        <div id="bulkFileInfo" style="display:none;margin-bottom:.5rem;font-size:.83rem;color:var(--muted)"></div>
-
-        <div style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0">
-          <hr style="flex:1;border-color:var(--border)"/>
-          <span style="font-size:.78rem;color:var(--muted);font-weight:600;white-space:nowrap">HOẶC DÁN TRỰC TIẾP</span>
-          <hr style="flex:1;border-color:var(--border)"/>
-        </div>
-        <label>Dán danh sách <span style="color:var(--muted);font-weight:400">(mỗi dòng: Họ tên, Gmail, SĐT, Lớp — cách nhau bằng tab hoặc phẩy)</span></label>
-        <textarea id="bulkPasteBox" rows="5"
-          placeholder="Dán từ Excel, Google Sheets...&#10;VD:&#10;Nguyễn Văn A	nguyenvana@gmail.com	0901234567	Lớp 10A&#10;Trần Thị B	tranthib@gmail.com		Lớp 10B"
-          style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:.65rem .9rem;font-size:.85rem;outline:none;font-family:inherit;resize:vertical;background:var(--card);color:var(--text);transition:border-color .2s"
-          onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"
-          oninput="parseBulkPaste(this.value)"></textarea>
-        <div id="bulkPasteInfo" style="font-size:.78rem;color:var(--muted);margin-top:.25rem"></div>
-
-        <div id="bulkStep1Error" class="error-msg" style="margin-top:.5rem"></div>
-        <div class="form-actions" style="margin-top:1rem">
-          <button class="btn-outline" onclick="document.getElementById('bulkCreateModal').classList.remove('open')">Hủy</button>
-          <button class="btn-primary" id="bulkPreviewBtn" onclick="previewBulkCreate()" disabled>🔍 Xem trước danh sách</button>
-        </div>
-      </div>
-
-      <!-- Bước 2: Preview & xác nhận -->
-      <div id="bulkStep2" style="display:none">
-        <div id="bulkPreviewStats" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem"></div>
-        <div style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px">
-          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
-            <thead style="background:var(--bg);position:sticky;top:0">
-              <tr>
-                <th style="padding:.5rem .75rem;text-align:left;border-bottom:1px solid var(--border)">#</th>
-                <th style="padding:.5rem .75rem;text-align:left;border-bottom:1px solid var(--border)">Họ tên</th>
-                <th style="padding:.5rem .75rem;text-align:left;border-bottom:1px solid var(--border)">Gmail</th>
-                <th style="padding:.5rem .75rem;text-align:left;border-bottom:1px solid var(--border)">SĐT</th>
-                <th style="padding:.5rem .75rem;text-align:left;border-bottom:1px solid var(--border)">Lớp</th>
-                <th style="padding:.5rem .75rem;text-align:left;border-bottom:1px solid var(--border)">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody id="bulkPreviewBody"></tbody>
-          </table>
-        </div>
-        <div id="bulkStep2Error" class="error-msg" style="margin-top:.5rem"></div>
-        <div id="bulkProgress" style="display:none;margin-top:.75rem">
-          <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;font-size:.82rem;font-weight:600">
-            <span id="bulkProgressText">Đang tạo...</span>
-            <span id="bulkProgressCount">0 / 0</span>
-          </div>
-          <div style="background:var(--bg);border-radius:10px;overflow:hidden;height:8px">
-            <div id="bulkProgressBar" style="height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:10px;transition:width .3s;width:0%"></div>
-          </div>
-        </div>
-        <div class="form-actions" style="margin-top:1rem">
-          <button class="btn-outline" id="bulkBackBtn" onclick="document.getElementById('bulkStep2').style.display='none';document.getElementById('bulkStep1').style.display='block'">← Quay lại</button>
-          <button class="btn-primary" id="bulkDoCreateBtn" onclick="doBulkCreate()">✅ Tạo tất cả tài khoản</button>
         </div>
       </div>
     </div>

@@ -360,8 +360,8 @@ if (!isTeacher) {
    'expiryReminderPanel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
-  // Ẩn nút Công cụ, Tạo hàng loạt, Thêm học sinh, Tạo lớp, Dọn lớp ảo
-  ['toolsDropdownWrap','bulkCreateBtn','openAddStudentBtn','openAddClassBtn','cleanFakeClassesBtn'].forEach(id => {
+  // Ẩn nút Công cụ, Thêm học sinh, Tạo lớp, Dọn lớp ảo
+  ['toolsDropdownWrap','openAddStudentBtn','openAddClassBtn','cleanFakeClassesBtn'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   // Ẩn Quản lý hệ thống và Chế độ bảo trì
@@ -416,7 +416,7 @@ function stopStudentAutoRefresh() {
 async function showPage(name) {
   // Guard: GV chỉ được vào các trang được phép
   if (_teacherClass) {
-    const _allowedPagesGV = ['overview','lessons','lesson-groups','schedule','files','announcements','profile','students','classes','homework','vocab','grammar'];
+    const _allowedPagesGV = ['overview','lessons','lesson-groups','schedule','files','announcements','profile','students','classes','homework','vocab','grammar','guide'];
     if (!_allowedPagesGV.includes(name)) name = 'overview';
   }
 
@@ -459,6 +459,7 @@ async function showPage(name) {
   if (name === 'files')          initFileManager();
   if (name === 'vocab')          { await populateClassFilters(); renderVocabSets(); }
   if (name === 'grammar')        { await populateClassFilters(); renderGrammarLessons(); }
+  if (name === 'guide')          renderGuide();
 }
 document.querySelectorAll('.slink[data-page]').forEach(l => {
   l.addEventListener('click', e => { e.preventDefault(); showPage(l.dataset.page); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarBackdrop').classList.remove('show'); });
@@ -1562,7 +1563,7 @@ document.getElementById('naCopyBtn')?.addEventListener('click', () => {
     if (c >= '0' && c <= '9') return `số ${c}`;
     return c;
   }).join(' - ');
-  const text  = `Họ tên: ${name}\nMã HV: ${code}\nGmail: ${user}\nMật khẩu: ${pw}\n📖 Đọc: ${spelled}\nLớp: ${cls}\nNgày khai giảng: ${start}\nNgày kết thúc: ${end}\nSĐT: ${phone}\n\n👉 Bạn sao chép mật khẩu trên rồi dán vào chỗ mật khẩu trong web nha.\n🌐 Link học: https://trancuongdev.github.io/Thien-Tue-English/\nNếu gặp vấn đề kỹ thuật hay gì cứ liên hệ mình nha.`;
+  const text  = `Họ tên: ${name}\nMã HV: ${code}\nGmail: ${user}\nMật khẩu: ${pw}\n📖 Đọc: ${spelled}\nLớp: ${cls}\nNgày khai giảng: ${start}\nNgày kết thúc: ${end}\nSĐT: ${phone}\n\n👉 Bạn sao chép mật khẩu trên rồi dán vào chỗ mật khẩu trong web nha.\n🌐 Link học: https://trancuongdev.github.io/ThienTue-English/\nNếu gặp vấn đề kỹ thuật hay gì cứ liên hệ mình nha.`;
   navigator.clipboard?.writeText(text).then(() => {
     const btn = document.getElementById('naCopyBtn');
     btn.textContent = '✅ Đã sao chép!';
@@ -1714,7 +1715,7 @@ function renderStudentRow(s, today, expiredClasses) {
     });
   }
   tr.querySelector('[data-action="copy"]').addEventListener('click', () => {
-    const text = `Họ tên: ${s.full_name}\nMã HV: ${s.student_code||''}\nGmail: ${s.username}\nMật khẩu: ${s.student_code||''}\nLớp: ${s.class_name||''}\n\n🌐 Link học: https://trancuongdev.github.io/Thien-Tue-English/`;
+    const text = `Họ tên: ${s.full_name}\nMã HV: ${s.student_code||''}\nGmail: ${s.username}\nMật khẩu: ${s.student_code||''}\nLớp: ${s.class_name||''}\n\n🌐 Link học: https://trancuongdev.github.io/ThienTue-English/`;
     navigator.clipboard?.writeText(text).then(() => {
       const btn = tr.querySelector('[data-action="copy"]');
       btn.textContent = '✅ Đã copy!';
@@ -6492,351 +6493,6 @@ async function sendClassAddedEmail(student, className) { return false; }
 // TẠO TÀI KHOẢN HÀNG LOẠT
 // ============================================================
 
-let _bulkRows = []; // danh sách học sinh đã parse
-
-// Mở modal tạo hàng loạt
-async function openBulkCreateModal() {
-  // Reset về bước 1
-  _bulkRows = [];
-  document.getElementById('bulkStep1').style.display = 'block';
-  document.getElementById('bulkStep2').style.display = 'none';
-  document.getElementById('bulkPasteBox').value = '';
-  document.getElementById('bulkPasteInfo').textContent = '';
-  document.getElementById('bulkFileInfo').style.display = 'none';
-  document.getElementById('bulkStep1Error').textContent = '';
-  document.getElementById('bulkPreviewBtn').disabled = true;
-  document.getElementById('bulkDropZone').innerHTML = `
-    <div style="font-size:2rem;margin-bottom:.35rem">📎</div>
-    <div style="font-weight:700;color:var(--text)">Kéo thả hoặc bấm để chọn file</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem">Excel (.xlsx) hoặc CSV — cột: <b>Họ tên, Gmail</b> (bắt buộc), SĐT, Lớp, Ghi chú (tuỳ chọn)</div>
-    <input type="file" id="bulkFileInput" accept=".xlsx,.csv,.xls" hidden onchange="parseBulkFile(this.files[0])"/>`;
-
-  // Populate lớp mặc định
-  const classes = await getClasses();
-  const sel = document.getElementById('bulkDefaultClass');
-  sel.innerHTML = '<option value="">-- Không gán lớp --</option>' +
-    classes.map(c => `<option value="${c}">${c}</option>`).join('');
-
-  document.getElementById('bulkCreateModal').classList.add('open');
-}
-
-// Kéo thả file
-function handleBulkDrop(e) {
-  e.preventDefault();
-  document.getElementById('bulkDropZone').style.borderColor = 'var(--border)';
-  const file = e.dataTransfer.files[0];
-  if (file) parseBulkFile(file);
-}
-
-// Parse file Excel/CSV
-async function parseBulkFile(file) {
-  if (!file) return;
-  const errEl = document.getElementById('bulkStep1Error');
-  errEl.textContent = '';
-  try {
-    let rows = [];
-    const name = file.name.toLowerCase();
-
-    if (name.endsWith('.csv')) {
-      const text = await file.text();
-      rows = _parseBulkCsv(text);
-    } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
-      const buffer = await file.arrayBuffer();
-      const wb = XLSX.read(buffer, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      rows = _normalizeBulkRows(data);
-    } else {
-      errEl.textContent = 'Chỉ hỗ trợ .xlsx, .xls hoặc .csv';
-      return;
-    }
-
-    if (!rows.length) { errEl.textContent = 'Không tìm thấy dữ liệu hợp lệ trong file.'; return; }
-
-    _bulkRows = rows;
-    document.getElementById('bulkFileInfo').style.display = 'block';
-    document.getElementById('bulkFileInfo').innerHTML = `✅ Đã đọc <b>${rows.length}</b> dòng từ <b>${file.name}</b>`;
-    document.getElementById('bulkDropZone').innerHTML = `
-      <div style="font-size:1.5rem;margin-bottom:.25rem">✅</div>
-      <div style="font-weight:700;color:#065f46">${file.name}</div>
-      <div style="font-size:.78rem;color:var(--muted)">${rows.length} dòng dữ liệu</div>
-      <input type="file" id="bulkFileInput" accept=".xlsx,.csv,.xls" hidden onchange="parseBulkFile(this.files[0])"/>`;
-    document.getElementById('bulkDropZone').style.borderColor = '#10b981';
-    document.getElementById('bulkDropZone').style.background = '#f0fdf4';
-    document.getElementById('bulkPreviewBtn').disabled = false;
-    // Xóa paste box
-    document.getElementById('bulkPasteBox').value = '';
-    document.getElementById('bulkPasteInfo').textContent = '';
-  } catch(e) {
-    errEl.textContent = 'Lỗi đọc file: ' + e.message;
-  }
-}
-
-// Chuẩn hóa header từ Excel (tìm cột tên/gmail/sđt/lớp/ghi chú)
-function _normalizeBulkRows(data) {
-  // Map tên cột tiếng Việt → key chuẩn
-  const colMap = {
-    'họ tên': 'name', 'ho ten': 'name', 'tên': 'name', 'ten': 'name',
-    'họ và tên': 'name', 'ho va ten': 'name', 'full name': 'name', 'fullname': 'name',
-    'gmail': 'username', 'email': 'username', 'tên đăng nhập': 'username',
-    'sdt': 'phone', 'số điện thoại': 'phone', 'so dien thoai': 'phone', 'phone': 'phone',
-    'lớp': 'class_name', 'lop': 'class_name', 'class': 'class_name', 'lớp học': 'class_name',
-    'ghi chú': 'notes', 'ghi chu': 'notes', 'notes': 'notes', 'note': 'notes',
-  };
-  return data.map(row => {
-    const out = {};
-    Object.entries(row).forEach(([k, v]) => {
-      const norm = k.toLowerCase().trim().replace(/\s+/g, ' ');
-      const mapped = colMap[norm];
-      if (mapped) out[mapped] = String(v||'').trim();
-    });
-    return out;
-  }).filter(r => r.name || r.username);
-}
-
-// Parse CSV text
-function _parseBulkCsv(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  if (!lines.length) return [];
-  // Phát hiện header
-  const header = lines[0].split(/[,;\t]/).map(h => h.trim().replace(/['"]/g,'').toLowerCase());
-  const colMap = {
-    'họ tên': 'name', 'ho ten': 'name', 'tên': 'name', 'ten': 'name',
-    'họ và tên': 'name', 'full name': 'name', 'fullname': 'name',
-    'gmail': 'username', 'email': 'username',
-    'sdt': 'phone', 'số điện thoại': 'phone', 'phone': 'phone',
-    'lớp': 'class_name', 'lop': 'class_name', 'class': 'class_name',
-    'ghi chú': 'notes', 'ghi chu': 'notes', 'notes': 'notes',
-  };
-  const idxMap = {};
-  header.forEach((h, i) => { if (colMap[h]) idxMap[colMap[h]] = i; });
-
-  // Nếu không có header → thử auto-detect theo thứ tự: name, username, phone, class_name
-  const hasHeader = Object.keys(idxMap).length >= 2;
-  if (!hasHeader) {
-    // Auto: cột 0=name, 1=username(gmail), 2=phone, 3=class_name
-    return lines.map(line => {
-      const cols = line.split(/[,;\t]/).map(c => c.trim().replace(/['"]/g,''));
-      const username = cols.find(c => /^[^\s@]+@gmail\.com$/i.test(c)) || cols[1] || '';
-      return { name: cols[0]||'', username, phone: cols[2]||'', class_name: cols[3]||'' };
-    }).filter(r => r.name || r.username);
-  }
-
-  return lines.slice(1).map(line => {
-    const cols = line.split(/[,;\t]/).map(c => c.trim().replace(/['"]/g,''));
-    const out = {};
-    Object.entries(idxMap).forEach(([key, idx]) => { out[key] = cols[idx] || ''; });
-    return out;
-  }).filter(r => r.name || r.username);
-}
-
-// Dán trực tiếp từ clipboard
-function parseBulkPaste(text) {
-  const infoEl = document.getElementById('bulkPasteInfo');
-  const previewBtn = document.getElementById('bulkPreviewBtn');
-  if (!text.trim()) {
-    _bulkRows = [];
-    infoEl.textContent = '';
-    previewBtn.disabled = true;
-    return;
-  }
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  // Kiểm tra xem có header không (dòng đầu chứa @gmail → không phải header)
-  const firstHasGmail = /gmail\.com/i.test(lines[0]);
-  const rows = [];
-
-  lines.forEach((line, idx) => {
-    if (idx === 0 && !firstHasGmail) {
-      // Có thể là header → bỏ qua nếu không có gmail
-      const cols = line.split(/[\t,;]/).map(c => c.trim());
-      if (!cols.some(c => /gmail\.com/i.test(c))) return;
-    }
-    const cols = line.split(/[\t,;]/).map(c => c.trim().replace(/['"]/g,''));
-    const gmail = cols.find(c => /^[^\s@]+@gmail\.com$/i.test(c));
-    if (!gmail && !cols[0]) return;
-    // Tìm họ tên: cột đầu không phải gmail và không phải số điện thoại
-    const name = cols.find(c => c && !/gmail\.com/i.test(c) && !/^\d{9,11}$/.test(c)) || '';
-    const phone = cols.find(c => /^\d{9,11}$/.test(c)) || '';
-    const cls = cols.find(c => c && c !== name && c !== gmail && c !== phone && c.length > 1) || '';
-    rows.push({ name, username: gmail || '', phone, class_name: cls });
-  });
-
-  const valid = rows.filter(r => r.username && isValidGmail(r.username));
-  if (!valid.length) {
-    infoEl.innerHTML = '<span style="color:#92400e">⚠️ Không tìm thấy dòng hợp lệ (cần có Gmail)</span>';
-    previewBtn.disabled = true;
-    _bulkRows = [];
-    return;
-  }
-  _bulkRows = rows;
-  infoEl.innerHTML = `<span style="color:#065f46">✅ Nhận được <b>${valid.length}</b> dòng hợp lệ</span>`;
-  previewBtn.disabled = false;
-  // Reset file info
-  document.getElementById('bulkFileInfo').style.display = 'none';
-}
-
-// Preview trước khi tạo
-async function previewBulkCreate() {
-  const errEl = document.getElementById('bulkStep1Error');
-  errEl.textContent = '';
-  if (!_bulkRows.length) { errEl.textContent = 'Không có dữ liệu.'; return; }
-
-  const defaultClass = document.getElementById('bulkDefaultClass').value;
-
-  // Lấy danh sách gmail đã có trong DB
-  const allUsernames = _bulkRows.map(r => r.username).filter(Boolean).map(u => u.toLowerCase());
-  const batchSize = 50;
-  let existingSet = new Set();
-  for (let i = 0; i < allUsernames.length; i += batchSize) {
-    const batch = allUsernames.slice(i, i + batchSize);
-    const { data } = await db.from('students').select('username').in('username', batch);
-    (data||[]).forEach(s => existingSet.add(s.username.toLowerCase()));
-  }
-
-  const tbody = document.getElementById('bulkPreviewBody');
-  tbody.innerHTML = '';
-  let validCount = 0, skipCount = 0, errorCount = 0;
-
-  _bulkRows.forEach((row, idx) => {
-    const gmail = (row.username||'').trim().toLowerCase();
-    const name  = (row.name||'').trim();
-    const cls   = (row.class_name||'').trim() || defaultClass;
-
-    let status = '', statusColor = '', skip = false;
-    if (!gmail || !isValidGmail(gmail)) {
-      status = '❌ Gmail không hợp lệ'; statusColor = '#ef4444'; skip = true; errorCount++;
-    } else if (existingSet.has(gmail)) {
-      status = '⚠️ Gmail đã tồn tại'; statusColor = '#f59e0b'; skip = true; skipCount++;
-    } else if (!name) {
-      status = '❌ Thiếu họ tên'; statusColor = '#ef4444'; skip = true; errorCount++;
-    } else {
-      // Heuristic check
-      const h = checkGmailHeuristic(gmail);
-      if (h.suspicious) {
-        status = `⚠️ Có vẻ ảo (${h.reason})`; statusColor = '#f59e0b'; validCount++;
-      } else {
-        status = '✅ Sẽ tạo mới'; statusColor = '#10b981'; validCount++;
-      }
-    }
-    // Đánh dấu row để doBulkCreate biết bỏ qua
-    row._skip = skip;
-    row._cls  = cls;
-    row._gmail = gmail;
-
-    const tr = document.createElement('tr');
-    tr.style.background = skip ? (existingSet.has(gmail) ? '#fffbeb' : '#fff5f5') : '';
-    tr.innerHTML = `
-      <td style="padding:.45rem .75rem;border-bottom:1px solid var(--border)">${idx+1}</td>
-      <td style="padding:.45rem .75rem;border-bottom:1px solid var(--border);font-weight:600">${name||'<span style="color:#94a3b8">—</span>'}</td>
-      <td style="padding:.45rem .75rem;border-bottom:1px solid var(--border)">${gmail}</td>
-      <td style="padding:.45rem .75rem;border-bottom:1px solid var(--border)">${row.phone||'—'}</td>
-      <td style="padding:.45rem .75rem;border-bottom:1px solid var(--border)">${cls||'<span style="color:#94a3b8">Chưa có</span>'}</td>
-      <td style="padding:.45rem .75rem;border-bottom:1px solid var(--border);font-weight:600;color:${statusColor}">${status}</td>`;
-    tbody.appendChild(tr);
-  });
-
-  // Stats
-  const statsEl = document.getElementById('bulkPreviewStats');
-  statsEl.innerHTML = `
-    <div style="background:#d1fae5;color:#065f46;padding:.45rem .9rem;border-radius:8px;font-weight:700;font-size:.83rem">✅ Tạo mới: ${validCount}</div>
-    <div style="background:#fef3c7;color:#92400e;padding:.45rem .9rem;border-radius:8px;font-weight:700;font-size:.83rem">⚠️ Bỏ qua (đã có): ${skipCount}</div>
-    <div style="background:#fee2e2;color:#991b1b;padding:.45rem .9rem;border-radius:8px;font-weight:700;font-size:.83rem">❌ Lỗi: ${errorCount}</div>`;
-
-  document.getElementById('bulkDoCreateBtn').textContent = `✅ Tạo ${validCount} tài khoản`;
-  document.getElementById('bulkDoCreateBtn').disabled = validCount === 0;
-
-  document.getElementById('bulkStep1').style.display = 'none';
-  document.getElementById('bulkStep2').style.display = 'block';
-}
-
-// Thực hiện tạo tài khoản hàng loạt
-async function doBulkCreate() {
-  const toCreate = _bulkRows.filter(r => !r._skip);
-  if (!toCreate.length) return;
-
-  const btn = document.getElementById('bulkDoCreateBtn');
-  const backBtn = document.getElementById('bulkBackBtn');
-  btn.disabled = true;
-  backBtn.disabled = true;
-  document.getElementById('bulkProgress').style.display = 'block';
-  document.getElementById('bulkStep2Error').textContent = '';
-
-  let done = 0, failed = 0;
-  const total = toCreate.length;
-
-  for (const row of toCreate) {
-    try {
-      // Tạo mã học viên unique
-      const code = await genStudentCode();
-      const password = code;
-      const name  = row.name.trim();
-      const gmail = row._gmail;
-      const phone = (row.phone||'').replace(/\D/g,'').slice(0,10) || null;
-      const cls   = row._cls || null;
-      const notes = (row.notes||'').trim() || null;
-
-      // Insert vào DB
-      const { data: newStu, error } = await db.from('students').insert({
-        student_code: code,
-        full_name:    name,
-        phone,
-        username:     gmail,
-        password:     await hashPw(password),
-        class_name:   cls ? cls.split(',')[0].trim() : null,
-        active:       true,
-        notes
-      }).select('id').single();
-
-      if (error) { failed++; continue; }
-
-      // Thêm vào student_classes
-      if (cls && newStu?.id) {
-        const clsList = cls.split(',').map(c => c.trim()).filter(Boolean);
-        await Promise.all(clsList.map(c =>
-          db.from('student_classes').insert({ student_id: newStu.id, class_name: c }).catch(() => {})
-        ));
-      }
-
-      // Gửi email (không chặn vòng lặp)
-      sendWelcomeEmail({
-        full_name:    name,
-        username:     gmail,
-        password_raw: password,
-        class_name:   cls || '',
-        student_code: code
-      }).catch(() => {});
-
-      logAccountActivity('Tạo tài khoản', { full_name: name, username: gmail, class_name: cls||'' }).catch(() => {});
-
-      done++;
-    } catch(e) {
-      failed++;
-    }
-
-    // Cập nhật progress bar
-    const pct = Math.round(((done + failed) / total) * 100);
-    document.getElementById('bulkProgressBar').style.width = pct + '%';
-    document.getElementById('bulkProgressCount').textContent = `${done + failed} / ${total}`;
-    document.getElementById('bulkProgressText').textContent = `Đang tạo... (${done} thành công, ${failed} lỗi)`;
-  }
-
-  // Hoàn tất
-  document.getElementById('bulkProgressText').textContent = `✅ Hoàn tất! ${done} tài khoản đã tạo${failed ? `, ${failed} lỗi` : ''}.`;
-  document.getElementById('bulkProgressBar').style.background = '#10b981';
-  btn.textContent = '✅ Xong';
-  btn.disabled = false;
-  btn.onclick = () => {
-    document.getElementById('bulkCreateModal').classList.remove('open');
-    renderStudents();
-    populateClassFilters();
-  };
-  backBtn.disabled = false;
-  if (failed > 0) {
-    document.getElementById('bulkStep2Error').textContent = `⚠️ ${failed} dòng tạo thất bại (có thể Gmail đã tồn tại hoặc lỗi mạng).`;
-  }
-  showToast(`📋 Đã tạo ${done} tài khoản hàng loạt`);
-}
-
 // ============================================================
 // KIỂM TRA GMAIL THẬT / ẢO
 // ============================================================
@@ -7580,4 +7236,218 @@ async function removeTeacherFromClass(cls) {
     showToast(`Đã xóa GV khỏi lớp ${cls}`);
     renderClasses();
   }, { title: 'Xóa giáo viên', icon: '👨‍🏫', okText: 'Xóa' });
+}
+
+
+// ══════════════════════════════════════════════════
+// GUIDE — Hướng dẫn sử dụng
+// ══════════════════════════════════════════════════
+const GUIDE_DATA = [
+  // ── HỌC SINH ──
+  { cat:'student', icon:'➕', title:'Thêm học sinh mới', steps:[
+    'Vào <b>Admin → Thêm học viên mới</b>',
+    'Nhập Gmail (bắt buộc), Họ tên, SĐT, chọn Lớp',
+    'Mã học sinh tự động tạo — cũng là mật khẩu đăng nhập ban đầu',
+    'Bấm <b>Lưu</b> — hệ thống tự gửi email thông tin tài khoản',
+    '⚠️ Gmail phải là @gmail.com hợp lệ, không trùng tài khoản khác',
+  ]},
+  { cat:'student', icon:'✏️', title:'Sửa thông tin học sinh', steps:[
+    'Danh sách học sinh → nút <b>⋮</b> → <b>Sửa</b>',
+    'Có thể sửa: Họ tên, Gmail, SĐT, Mã HS, Ghi chú',
+    'Thêm/xóa lớp phụ trong tab <b>Lớp học</b>',
+    '<b>Trợ lý không được sửa ngày hết hạn</b>',
+  ]},
+  { cat:'student', icon:'🔒', title:'Khóa / Mở khóa tài khoản', steps:[
+    'Danh sách học sinh → nút <b>⋮</b> → <b>Khóa/Mở khóa</b>',
+    'Học sinh bị khóa không đăng nhập được — hiện badge 🔒',
+    'Tài khoản tự khóa khi nhập sai mật khẩu quá nhiều lần',
+  ]},
+  { cat:'student', icon:'🔄', title:'Đồng bộ Gmail → Lớp phụ', steps:[
+    'Danh sách học sinh → <b>Công cụ → Đồng bộ Gmail → Lớp</b>',
+    'Upload file Excel/CSV danh sách Gmail hoặc dán trực tiếp',
+    'Chọn lớp → Phân tích → Xem danh sách cần thêm',
+    'Bấm <b>Đồng bộ</b> — tự thêm lớp và gửi thông báo',
+  ]},
+  // ── BÀI HỌC ──
+  { cat:'lesson', icon:'📂', title:'Tạo nhóm bài học', steps:[
+    'Admin → <b>Nhóm bài học → Thêm nhóm</b>',
+    'Nhập tên nhóm, chọn lớp, giới hạn học sinh nếu cần',
+    'Nhóm có thể có nhóm con (tối đa 3 cấp)',
+    'Kéo thả để sắp xếp thứ tự nhóm',
+  ]},
+  { cat:'lesson', icon:'📚', title:'Thêm bài học', steps:[
+    'Nhóm bài học → click nhóm → <b>Thêm bài học</b>',
+    'Nhập tên bài, mô tả, link video/tài liệu ngay khi tạo',
+    'Kéo thả để sắp xếp thứ tự bài trong nhóm',
+  ]},
+  { cat:'lesson', icon:'🎬', title:'Thêm video cho bài học', steps:[
+    'Click vào bài → tab <b>Video</b> → <b>Thêm video</b>',
+    '3 cách: <b>Link URL</b> (Drive/YouTube), <b>Mã nhúng iframe</b>, <b>Upload file</b>',
+    'Google Drive: phải chọn "Chia sẻ → Bất kỳ ai có link"',
+  ]},
+  { cat:'lesson', icon:'📄', title:'Thêm tài liệu cho bài học', steps:[
+    'Click vào bài → tab <b>Tài liệu</b> → <b>Tải lên</b>',
+    'Hỗ trợ Link URL, file PDF/Word/Excel/ảnh',
+    'Loại <b>Bản viết tay</b>: ảnh chụp tay — phân loại riêng',
+  ]},
+  // ── LỚP HỌC ──
+  { cat:'class', icon:'🏫', title:'Tạo lớp học mới', steps:[
+    'Admin → <b>Lớp học → Tạo lớp</b>',
+    'Nhập tên lớp, ngày khai giảng, ngày kết thúc',
+    'Ngày kết thúc tự đặt làm ngày hết hạn tài khoản học sinh',
+    'Tên lớp không được trùng',
+  ]},
+  { cat:'class', icon:'🗑️', title:'Xóa lớp học', steps:[
+    'Lớp học → nút xóa bên cạnh tên lớp',
+    'Chọn <b>Giữ học sinh</b> hoặc <b>Xóa luôn tất cả học sinh</b>',
+    '⚠️ Xóa luôn không thể hoàn tác',
+  ]},
+  // ── FILE ──
+  { cat:'file', icon:'📁', title:'Tạo thư mục tài liệu', steps:[
+    'Admin → <b>Lưu trữ → Tạo thư mục</b>',
+    'Đặt tên, icon, màu sắc, chọn lớp học phù hợp',
+    'Thư mục có thể ghim lên đầu danh sách',
+  ]},
+  { cat:'file', icon:'⬆️', title:'Upload file tài liệu', steps:[
+    'Vào thư mục → bấm <b>Tải lên</b>',
+    'Kéo thả nhiều file hoặc nhập link ngoài (Google Drive...)',
+    'File lưu Supabase Storage — có link tải vĩnh viễn',
+    'Xem lượt tải từng file trong <b>Lịch sử tải</b>',
+  ]},
+  // ── HỆ THỐNG ──
+  { cat:'system', icon:'🔧', title:'Bật/tắt chế độ bảo trì', steps:[
+    'Quản trị → <b>Cài đặt → Chế độ bảo trì</b>',
+    'Bật toggle → học sinh thấy trang thông báo',
+    'Nhập nội dung thông báo → bấm Lưu',
+    'Tắt khi xong bảo trì',
+  ]},
+  { cat:'system', icon:'📢', title:'Gửi thông báo cho học sinh', steps:[
+    'Admin → <b>Thông báo → Tạo thông báo</b>',
+    'Chọn đối tượng: Tất cả / theo lớp / 1 học sinh cụ thể',
+    'Có thể ghim, đặt hết hạn 24h, lên lịch gửi',
+  ]},
+  { cat:'system', icon:'🔑', title:'Đổi mật khẩu Admin', steps:[
+    'Quản trị → <b>Cài đặt → Đổi mật khẩu Admin</b>',
+    'Nhập mật khẩu mới (tối thiểu 6 ký tự) → Xác nhận',
+    'Mật khẩu hash SHA-256 — không lưu plaintext',
+    'Đăng xuất và đăng nhập lại bằng mật khẩu mới',
+  ]},
+  { cat:'system', icon:'🧹', title:'Dọn dẹp dữ liệu cũ', steps:[
+    'Quản trị → <b>Bảo trì</b>',
+    'exam_progress cũ > 7 ngày, alerts cũ > 30 ngày, access_logs > 30 ngày',
+    'File thùng rác: xóa vĩnh viễn',
+    '⚠️ Không thể hoàn tác — nên thực hiện hàng tháng',
+  ]},
+  // ── TRỢ LÝ ──
+  { cat:'assistant', icon:'🤝', title:'Tạo tài khoản trợ lý', steps:[
+    'Quản trị → <b>Tài khoản trợ lý → Thêm trợ lý</b>',
+    'Nhập họ tên, tên đăng nhập, mật khẩu',
+    'Trợ lý đăng nhập tại <b>login.html</b> → vào thẳng trang Admin',
+  ]},
+  { cat:'assistant', icon:'🔐', title:'Quyền hạn trợ lý', steps:[
+    '✅ Có thể: thêm/sửa học sinh, bài học, file, thông báo, lịch học',
+    '❌ Không thể: vào trang Quản trị hệ thống',
+    '❌ Không được đặt ngày hết hạn tài khoản',
+    'Toàn bộ thao tác ghi vào <b>Nhật ký trợ lý</b>',
+  ]},
+  { cat:'assistant', icon:'📋', title:'Xem nhật ký trợ lý', steps:[
+    'Quản trị → <b>Nhật ký trợ lý</b>',
+    'Lọc theo ngày, tên trợ lý, loại hành động',
+    'Badge màu: 🎓 Học sinh | 📚 Bài học | 🏫 Lớp | 📢 Thông báo...',
+    'Cập nhật realtime — không cần reload',
+  ]},
+  // ── GIÁO VIÊN ──
+  { cat:'teacher', icon:'👨‍🏫', title:'Thêm tài khoản giáo viên', steps:[
+    'Quản trị hệ thống → <b>Tài khoản giáo viên → Thêm giáo viên</b>',
+    'Nhập họ tên, tên đăng nhập, mật khẩu (tối thiểu 6 ký tự)',
+    'Nhập lớp quản lý (tùy chọn) — GV chỉ thấy nội dung lớp được phân công',
+    'Tài khoản lưu trong <b>Supabase</b> — GV đăng nhập từ bất kỳ thiết bị nào',
+  ]},
+  { cat:'teacher', icon:'✏️', title:'Sửa / Đổi mật khẩu giáo viên', steps:[
+    'Quản trị hệ thống → <b>Tài khoản giáo viên</b> → bấm ✏️',
+    'Có thể sửa họ tên, tên đăng nhập, lớp quản lý',
+    'Để trống ô mật khẩu = giữ nguyên mật khẩu cũ',
+    'Nhập mật khẩu mới để đổi',
+  ]},
+  { cat:'teacher', icon:'🔑', title:'GV đăng nhập như thế nào', steps:[
+    'GV vào trang login, nhập username và mật khẩu được Admin cấp',
+    'GV đăng nhập với role <b>teacher</b> → vào trang Admin đầy đủ quyền',
+    'Có thể phân lớp để giới hạn nội dung GV quản lý',
+    'Admin (tài khoản gốc) có quyền cao nhất — vào được Quản trị hệ thống',
+  ]},
+];
+
+let _guideTab = 'all';
+
+function renderGuide() {
+  filterGuide(document.getElementById('guideSearch')?.value || '');
+}
+
+function setGuideTab(tab, btn) {
+  _guideTab = tab;
+  document.querySelectorAll('#guideTabs button').forEach(b => {
+    b.className = 'btn-outline btn-sm';
+  });
+  if (btn) btn.className = 'btn-primary btn-sm';
+  filterGuide(document.getElementById('guideSearch')?.value || '');
+}
+
+function filterGuide(q) {
+  q = (q||'').toLowerCase().trim();
+  const filtered = GUIDE_DATA.filter(item => {
+    if (_guideTab !== 'all' && item.cat !== _guideTab) return false;
+    if (!q) return true;
+    return item.title.toLowerCase().includes(q) ||
+           item.steps.some(s => s.toLowerCase().includes(q));
+  });
+
+  const container = document.getElementById('guideContent');
+  if (!container) return;
+  if (!filtered.length) {
+    container.innerHTML = `<div style="text-align:center;color:var(--muted);padding:3rem">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">🔍</div>
+      Không tìm thấy hướng dẫn phù hợp
+    </div>`;
+    return;
+  }
+
+  const catMeta = {
+    student:   { label:'🎓 Học sinh',     color:'#eef2ff', border:'#6366f1' },
+    lesson:    { label:'📚 Bài học',      color:'#fef3c7', border:'#f59e0b' },
+    class:     { label:'🏫 Lớp học',     color:'#d1fae5', border:'#10b981' },
+    file:      { label:'🗂️ File',        color:'#e0f2fe', border:'#0ea5e9' },
+    system:    { label:'⚙️ Hệ thống',    color:'#ede9fe', border:'#8b5cf6' },
+    assistant: { label:'🤝 Trợ lý',      color:'#fce7f3', border:'#ec4899' },
+    teacher:   { label:'👨‍🏫 Giáo viên',  color:'#f0fdf4', border:'#22c55e' },
+  };
+
+  const groups = {};
+  filtered.forEach(item => {
+    if (!groups[item.cat]) groups[item.cat] = [];
+    groups[item.cat].push(item);
+  });
+
+  container.innerHTML = Object.entries(groups).map(([cat, items]) => {
+    const meta = catMeta[cat] || { label: cat, color:'#f1f5f9', border:'#94a3b8' };
+    return `
+      <div style="margin-bottom:1.5rem">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.85rem;padding:.5rem .9rem;
+          background:${meta.color};border-radius:10px;border-left:3px solid ${meta.border}">
+          <span style="font-size:.88rem;font-weight:800;color:var(--text)">${meta.label}</span>
+          <span style="font-size:.72rem;color:var(--muted);background:rgba(0,0,0,.07);padding:.1rem .45rem;border-radius:20px">${items.length} hướng dẫn</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:.85rem">
+          ${items.map(item => `
+            <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:1.1rem 1.25rem;border-left:3px solid ${meta.border};box-shadow:var(--shadow)">
+              <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem">
+                <span style="font-size:1.2rem">${item.icon}</span>
+                <span style="font-size:.88rem;font-weight:800;color:var(--text)">${item.title}</span>
+              </div>
+              <ol style="margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.4rem">
+                ${item.steps.map(s => `<li style="font-size:.81rem;color:var(--text);line-height:1.65">${s}</li>`).join('')}
+              </ol>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
 }
