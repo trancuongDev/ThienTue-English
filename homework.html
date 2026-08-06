@@ -3910,12 +3910,12 @@ function distributeScores() {
 }
 
 function applyVSATScoring() {
-  // Quy tắc VSAT (thang 150 điểm thô → quy về thang tổng điểm bài):
-  // - Đúng/Sai:       9 câu × 4 tiểu mục → tổng 54đ thô  → mỗi câu 6đ thô
-  // - TN nhóm:        6 câu × 4 tiểu mục → tổng 36đ thô  → mỗi câu 1.5đ/tiểu mục
-  // - Ghép hợp:       5 câu × 4 tiểu mục → tổng 30đ thô  → mỗi câu 1.5đ/tiểu mục
-  // - Trả lời ngắn:   5 câu              → tổng 30đ thô  → mỗi câu 6đ thô
-  // Tổng thô = 150 → quy đổi về thang 10 (×10/150)
+  // Quy tắc VSAT — thang 150 điểm thô:
+  // - Đúng/Sai:       9 câu × 6đ  = 54đ
+  // - TN nhiều lựa chọn: 6 câu × 6đ = 36đ
+  // - Ghép hợp:       5 câu × 6đ  = 30đ
+  // - Trả lời ngắn:   5 câu × 6đ  = 30đ
+  // Tổng thô chuẩn = 150 điểm (giữ nguyên, không quy đổi)
 
   const realQs = editorQuestions.filter(q=>q.type!=='section');
   if (!realQs.length) { showToast('Chưa có câu hỏi nào', false); return; }
@@ -3924,51 +3924,36 @@ function applyVSATScoring() {
   const counts = { true_false:0, multiple_choice:0, matching:0, short_answer:0 };
   realQs.forEach(q=>{ if(counts[q.type]!==undefined) counts[q.type]++; });
 
-  // Điểm VSAT thô từng loại (thang quy về 10)
-  // true_false: mỗi câu = 6đ thô / 150 × 10 = 0.4đ
-  // multiple_choice: mỗi câu = 4×1.5 = 6đ thô / 150 × 10 = 0.4đ  
-  // matching: mỗi câu = 4×1.5 = 6đ thô / 150 × 10 = 0.4đ
-  // short_answer: mỗi câu = 6đ thô / 150 × 10 = 0.4đ
-  // Điểm từng câu theo đúng số lượng thực tế trong đề
+  // Điểm thô mỗi câu theo chuẩn VSAT
   const vsatRaw = {
-    true_false:       6,    // điểm thô mỗi câu ĐS
-    multiple_choice:  6,    // điểm thô mỗi câu TN (4 tiểu mục × 1.5)
-    matching:         6,    // điểm thô mỗi câu GH (4 cặp × 1.5)
-    short_answer:     6     // điểm thô mỗi câu TLN
+    true_false:      6,   // 9 câu × 6đ = 54đ
+    multiple_choice: 6,   // 6 câu × 6đ = 36đ
+    matching:        6,   // 5 câu × 6đ = 30đ
+    short_answer:    6    // 5 câu × 6đ = 30đ
   };
 
-  // Tổng thô thực tế của đề này
-  let totalRaw = 0;
-  realQs.forEach(q=>{ totalRaw += vsatRaw[q.type]||0; });
-
-  if (totalRaw === 0) { showToast('Không có câu hỏi hợp lệ', false); return; }
-
-  // Quy về thang 10
+  // Gán điểm thô trực tiếp cho từng câu
   realQs.forEach(q=>{
-    const raw = vsatRaw[q.type]||0;
-    q.points = Math.round((raw / totalRaw) * 10 * 100) / 100;
+    q.points = vsatRaw[q.type] || 6;
   });
 
-  // Điều chỉnh câu cuối cho tổng = 10
-  const sumFirst = realQs.slice(0,-1).reduce((s,q)=>s+q.points,0);
-  realQs[realQs.length-1].points = Math.round((10 - sumFirst) * 100) / 100;
+  // Tổng điểm thực tế của đề
+  const totalRaw = realQs.reduce((s,q)=>s+q.points, 0);
 
-  // Set tổng điểm bài = 10
+  // Set tổng điểm bài = tổng thô thực tế (150 nếu đủ câu chuẩn)
   const totalInput = document.getElementById('hwTotalScore');
-  if (totalInput) totalInput.value = 10;
+  if (totalInput) totalInput.value = totalRaw;
 
   renderQuestionList();
   updateScorePreview();
 
   // Thông báo chi tiết
+  const names = { true_false:'ĐS', multiple_choice:'TN', matching:'GH', short_answer:'TLN' };
   const detail = Object.entries(counts)
     .filter(([,v])=>v>0)
-    .map(([t,v])=>{
-      const names={true_false:'ĐS',multiple_choice:'TN',matching:'GH',short_answer:'TLN'};
-      const pts = Math.round((vsatRaw[t]||0)/totalRaw*10*100)/100;
-      return `${names[t]}×${v}(${pts}đ)`;
-    }).join(' | ');
-  showToast(`✅ Thang VSAT: ${detail} = 10đ`);
+    .map(([t,v])=>`${names[t]}×${v}(${vsatRaw[t]}đ)`)
+    .join(' | ');
+  showToast(`✅ Thang VSAT: ${detail} = ${totalRaw}đ`);
 }
 
 // Thêm câu hỏi mới vào editor
@@ -4544,14 +4529,14 @@ function buildSAEditor(q) {
     </div>
 
     ${autoGrade ? `
-    <div class="section-title" style="margin-top:.35rem">Đáp án chấp nhận <span style="font-weight:400;color:var(--muted)">(mỗi ô 1 đáp án — chỉ số, dấu . / -)</span></div>
+    <div class="section-title" style="margin-top:.35rem">Đáp án chấp nhận <span style="font-weight:400;color:var(--muted)">(mỗi ô 1 đáp án)</span></div>
     <div id="sa_accepted_${q._id}" style="display:flex;flex-direction:column;gap:.3rem">
       ${(accepted.length ? accepted : ['']).map((a,i)=>`
         <div style="display:flex;gap:.35rem;align-items:center">
           <span style="font-size:.75rem;font-weight:700;color:var(--muted);min-width:18px">${i+1}.</span>
-          <input type="text" inputmode="decimal" value="${esc(a)}"
-            placeholder="VD: 2 hoặc -1.5 hoặc 1/3"
-            oninput="saFilterNumeric(this);saUpdateAcceptedFromInputs(${q._id})"
+          <input type="text" value="${esc(a)}"
+            placeholder="VD: Paris hoặc 3.14 hoặc đáp án bất kỳ"
+            oninput="saUpdateAcceptedFromInputs(${q._id})"
             style="flex:1;border:1.5px solid var(--primary);border-radius:8px;padding:.4rem .7rem;font-size:.9rem;font-family:'Courier New',monospace;outline:none;background:var(--card);color:var(--text)"
             onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='var(--primary)'"/>
           ${accepted.length>0||i>0?`<button type="button" onclick="saRemoveAccepted(${q._id},${i})" class="opt-del">✕</button>`:'<span style="width:24px"></span>'}
@@ -4729,12 +4714,16 @@ function _shuffleQList(qs, seed, shuffleQ, shuffleA) {
 // Normalize số để so sánh: "1/2" → 0.5, "-3" → -3, "2.5" → 2.5
 function _normNumber(s) {
   const t = (s||'').toString().trim();
-  if (t.includes('/')) {
+  // Thử parse phân số dạng số/số (VD: 1/3, -2/5) — chỉ khi cả hai vế là số
+  if (/^-?\d+(\.\d+)?\/-?\d+(\.\d+)?$/.test(t)) {
     const [a,b] = t.split('/').map(Number);
     if (!isNaN(a) && !isNaN(b) && b !== 0) return a/b;
   }
   const n = parseFloat(t);
-  return isNaN(n) ? t.toLowerCase().replace(/\s+/g,' ') : n;
+  // Nếu là số thuần (không còn ký tự thừa) thì trả về số
+  if (!isNaN(n) && String(n) === t) return n;
+  // Còn lại coi là chuỗi — lowercase + chuẩn hóa khoảng trắng để so sánh không phân biệt hoa/thường
+  return t.toLowerCase().replace(/\s+/g,' ');
 }
 
 // ═══════════════════════════════════════════
@@ -5878,13 +5867,21 @@ function buildSADisplay(q, answers, isPreview, idx) {
         <span style="font-weight:600">${esc(hint)}</span>
       </div>` : ''}
     ${!isPreview ? `
-      ${isAuto ? `<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;font-size:.78rem;font-weight:700;color:#0369a1;background:#e0f2fe;border-radius:8px;padding:.3rem .65rem">
-        <span>⚡</span>
-        <span>Hệ thống tự chấm — nhập số (cho phép dấu <b>.</b> thập phân, <b>/</b> phân số, <b>-</b> âm)</span>
+      ${isAuto ? `
+      <div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.55rem;font-size:.78rem;background:linear-gradient(135deg,#e0f2fe,#dbeafe);border-radius:10px;padding:.55rem .75rem;border:1px solid #bfdbfe">
+        <span style="font-size:1rem;flex-shrink:0;margin-top:.05rem">⚡</span>
+        <div style="line-height:1.65">
+          <div style="font-weight:800;color:#1d4ed8;margin-bottom:.2rem">Câu trả lời ngắn — hệ thống tự chấm</div>
+          <div style="color:#1e40af">
+            • Gõ trực tiếp câu trả lời vào ô bên dưới<br/>
+            • Không phân biệt <b>CHỮ HOA / chữ thường</b> (VD: <i>london</i> = <i>LONDON</i>)<br/>
+            • Không phân biệt khoảng trắng thừa ở đầu/cuối
+          </div>
+        </div>
       </div>
-      <input type="text" inputmode="decimal"
-        placeholder="VD: 3 hoặc -2.5 hoặc 1/3"
-        oninput="saFilterNumeric(this);doHWAnswers[${q.id}]=this.value;_trackCurrentQ(${q.id});updateQNavigator()"
+      <input type="text"
+        placeholder="Nhập câu trả lời..."
+        oninput="doHWAnswers[${q.id}]=this.value;_trackCurrentQ(${q.id});updateQNavigator()"
         onpaste="_handlePaste(event,${_getHwAntiPaste()?1:0})"
         oncopy="_handleCopyDoc(event,${_getHwAntiPaste()?1:0})"
         oncut="_handleCopyDoc(event,${_getHwAntiPaste()?1:0})"
@@ -5892,6 +5889,13 @@ function buildSADisplay(q, answers, isPreview, idx) {
         style="width:100%;border:2px solid #7dd3fc;border-radius:10px;padding:.65rem .9rem;font-size:1.05rem;font-weight:700;outline:none;font-family:'Courier New',monospace;background:var(--card);color:var(--text);transition:border-color .2s;letter-spacing:.5px"
         onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#7dd3fc'"
       />` : `
+      <div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.55rem;font-size:.78rem;background:#f8fafc;border-radius:10px;padding:.5rem .75rem;border:1px solid var(--border)">
+        <span style="font-size:1rem;flex-shrink:0;margin-top:.05rem">✏️</span>
+        <div style="line-height:1.65;color:var(--muted)">
+          <div style="font-weight:700;color:var(--text);margin-bottom:.15rem">Câu trả lời tự luận — giáo viên chấm</div>
+          Viết câu trả lời đầy đủ vào ô bên dưới. Giáo viên sẽ chấm và phản hồi sau khi bạn nộp bài.
+        </div>
+      </div>
       <textarea rows="3" placeholder="Nhập câu trả lời của bạn..."
         oninput="doHWAnswers[${q.id}]=this.value;_trackCurrentQ(${q.id});updateQNavigator()"
         onpaste="_handlePaste(event,${_getHwAntiPaste()?1:0})"
